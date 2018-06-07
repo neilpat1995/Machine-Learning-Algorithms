@@ -12,7 +12,7 @@ def sigmoid(x):
 '''
 Trains a set of n models for to learn each of the dataset labels and returns n sets of learned weights.
 '''
-def fit_model(X, y, w = None, learning_rate = 0.25, threshold_value = 0.001):
+def fit_model(X, y, w = None, learning_rate = 0.25, threshold_value = 0.001, reg_coef = 1.0):
 	unique_labels = np.unique(y)
 	# Create initial weights for each model to train
 	if w is None:
@@ -27,19 +27,11 @@ def fit_model(X, y, w = None, learning_rate = 0.25, threshold_value = 0.001):
 		# Set labels to {0,1}; 1 = current model's label, 0 = all other labels 
 		y_curr_model = np.array([y == unique_labels[label_idx]]).astype(int)
 		current_weights = w[:, label_idx]
-
-		'''
-		print "Shape of 2nd arg = ", (sigmoid(np.dot(X,current_weights)) - y_curr_model).transpose().shape
-		print "Shape of 1st arg = ", X.transpose().shape
-		'''
 		
 		while True:
 			current_model_errors = (sigmoid(np.dot(X,current_weights)) - y_curr_model).transpose()[:,0]
-			'''
-			print "current_model_errors.shape = ", current_model_errors.shape
-			print "X.transpose.shape = ", X.transpose().shape
-			'''
 			updated_weights = current_weights - (learning_rate/num_samples) * np.dot(X.transpose(),current_model_errors)
+			updated_weights[1:] -= (learning_rate*reg_coef/num_samples) * current_weights[1:] # Regularize non-bias weights (L2-norm)
 			if np.all( ((current_weights - updated_weights) < threshold_value)):
 				w[:, label_idx] = updated_weights	# Set weights for the current model and continue to next model
 				break
@@ -64,12 +56,12 @@ predictions = model_predict(X_test, y_test, opt_weights)
 correct_preds_bool_arr = (predictions == y_test)
 
 
-print "Custom model intercepts: ", opt_weights[0,:]
-print "Custom model coef: ", opt_weights[1:,:]
+#print "Custom model intercepts: ", opt_weights[0,:]
+#print "Custom model coef: ", opt_weights[1:,:]
 print "Custom model accuracy on digits dataset (multiclass dataset): {}".format(np.count_nonzero(correct_preds_bool_arr)/predictions.shape[0])
 
 log_reg_cfr = LogisticRegression()
 log_reg_cfr.fit(X_train, y_train)
-print "Sklearn model intercepts: ", log_reg_cfr.intercept_
-print "Sklearn model coef: ", log_reg_cfr.coef_
+#print "Sklearn model intercepts: ", log_reg_cfr.intercept_
+#print "Sklearn model coef: ", log_reg_cfr.coef_
 print "Sklearn model accuracy on digits dataset (multiclass dataset): {}".format(log_reg_cfr.score(X_test,y_test))
