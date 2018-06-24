@@ -33,7 +33,7 @@ def fit_model(X, y, w = None, learning_rate = 0.25, threshold_value = 0.01, reg_
 
 		while True:
 			current_model_errors = (sigmoid(np.dot(X,current_weights)) - y_curr_model).transpose()[:,0]
-			updated_weights = current_weights - (learning_rate/num_samples) * np.dot(X.transpose(),current_model_errors)
+			updated_weights = current_weights - (learning_rate/num_samples) * np.dot(X.transpose(), current_model_errors)
 			updated_weights[1:] -= (learning_rate*reg_coef/num_samples) * current_weights[1:] # Regularize non-bias weights (L2-norm)
 			if np.all( ((np.absolute(current_weights - updated_weights)) < threshold_value)):
 				print "Finished building model for label ", unique_labels[label_idx]
