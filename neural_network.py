@@ -18,21 +18,11 @@ def sigmoid(x):
 	return np.reciprocal(1 + np.exp(-x))
 
 def forward_propagation(x, w):
-	# print "x: ", x, ", type(x): ", type(x)
-	# print "w: ", w
 	activations = [x]
-	# print 'activations (x) shape: ', activations[0].shape
 	for weight_matrix_idx in range(len(w)):
 		activations.append(np.zeros(w[weight_matrix_idx].shape[0])) # List of numpy arrays representing activations (for all layers)
-	# print "activations: ", activations
 
 	for layer_idx in range(len(w)):
-		# print "activations[layer_idx].shape: ", activations[layer_idx].shape
-		# print "layer_idx: ", layer_idx
-		# print "activations[layer_idx]: ", activations[layer_idx]
-		# print "activations[layer_idx].shape: ", activations[layer_idx].shape
-		# if activations[layer_idx].ndim == 1:
-		# 	activations[layer_idx] = np.expand_dims(activations[layer_idx], axis=1)
 		activations[layer_idx] = np.concatenate(([1], activations[layer_idx]))
 		activations[layer_idx + 1] = sigmoid(w[layer_idx].dot(activations[layer_idx]))
 
