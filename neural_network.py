@@ -6,11 +6,10 @@ from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 from sklearn.neural_network import MLPClassifier
 
-class NeuralNetwork():
+# class NeuralNetwork():
 
-	def __init__(self):
-		return self
-
+# 	def __init__(self):
+# 		return self
 
 EPSILON = 3
 
