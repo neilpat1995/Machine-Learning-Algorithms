@@ -11,11 +11,22 @@ from sklearn.neural_network import MLPClassifier
 # 	def __init__(self):
 # 		return self
 
-EPSILON = 3
+'''
+Define constants
+'''
+EPSILON = 3 # Constant used to randomly initialize weights.
+NUM_EPOCHS = 400 # Max number of training iterations.
 
+'''
+Quick utility function to compute sigmoid activations.
+'''
 def sigmoid(x):
-	return np.reciprocal(1 + np.exp(-x))
+	return 1./(1 + np.exp(-x))
 
+'''
+Computes each network layer's activations using forward propagation. 
+Note that all layers except for the output layer will have +1 bias terms.
+'''
 def forward_propagation(x, w):
 	activations = [x]
 	for weight_matrix_idx in range(len(w)):
@@ -30,29 +41,36 @@ def forward_propagation(x, w):
 '''
 Training algorithm that learns optimal network weights using backpropagation.
 '''
-def fit_model(X, y, hidden_layer_size, w=None, learning_rate=0.25, threshold_value=0.001, reg_coef=0.001):
+def fit_model(X, y, hidden_layer_sizes=None, w=None, learning_rate=0.25, threshold_value=0.001, reg_coef=0.001, print_optimal_weights=False):
 	'''
-	Parameters:
-	hidden_layer_size: an integer indicating the number of hidden layer activation units.
-		-> Future step: Support arbitrary numbers of hidden layers. Remove this and instead read in from a 
-		class field initialized in a constructor.
-	w: a list of 2 weight matrices for each network layer pair, mapping from input layer-> hidden layer and hidden layer-> output layer
+	hidden_layer_sizes: a tuple of integers indicating the number of activation units in each hidden layer.
+		-> Future step: Remove this and instead read in from a class field initialized in a constructor.
+	w: a list of (n-1) weight matrices mapping pairs of network layers, where n = total number of network layers.
 	'''
+
+	# Validate inputs. Assumes user-specified weights are well-formed.
+	if hidden_layer_sizes is None and w is None:
+		hidden_layer_sizes = (5,)
+	elif hidden_layer_sizes is not None and w is not None:
+		raise ValueError('Only one of \'hidden_layer_sizes\' and \'w\' parameters can be specified.')
 
 	# Handle single-sample inputs, i.e. one-dimensional training data and labels.
-
 	if X.ndim == 1:
 		X = np.expand_dims(X, axis=0)
 
 	if y.ndim == 1:
 		y = np.expand_dims(y, axis=0)
 
+	# Randomly initialize weights between [-EPSILON, EPSILON]
 	if w is None:
 		w = []
-		num_network_nodes = [X.shape[1], hidden_layer_size, y.shape[1]] # List of number of nodes per layer excluding all biases
+		num_network_nodes = list(hidden_layer_sizes)
+		num_network_nodes.insert(0, X.shape[1])
+		num_network_nodes.append(y.shape[1]) # List of number of nodes per layer excluding all biases
 		for layer_idx in range(len(num_network_nodes) - 1):
-			# Randomly initialize weights between [-EPSILON, EPSILON]
 			w.append(np.random.rand(num_network_nodes[layer_idx + 1], num_network_nodes[layer_idx] + 1) * (2 * EPSILON) - EPSILON)
+
+	epoch = 1
 
 	while True:
 		# Intialize parameters
@@ -63,14 +81,14 @@ def fit_model(X, y, hidden_layer_size, w=None, learning_rate=0.25, threshold_val
 			D.append(np.zeros((w[weight_matrix_idx].shape[0], w[weight_matrix_idx].shape[1])))
 
 		for sample_idx in range(X.shape[0]):
-			activations = forward_propagation(X[sample_idx,:], w)
+			activations = forward_propagation(X[sample_idx], w)
 			deltas = [[None]] * (len(activations) - 1) # Exclude computation of errors for input layer
-			deltas[-1] = activations[-1] - y[sample_idx, :]	# Output error
+			deltas[-1] = activations[-1] - y[sample_idx]	# Output error
 			# Compute deltas for all hidden layers
 			for layer_idx in range(len(deltas) - 2, -1, -1):
 				deltas[layer_idx] = np.matmul(np.transpose(w[layer_idx + 1]), deltas[layer_idx + 1])
-				deltas[layer_idx] = deltas[layer_idx] * activations[layer_idx + 1]
-				deltas[layer_idx] = deltas[layer_idx] * (1 - activations[layer_idx + 1])
+				deltas[layer_idx] *= activations[layer_idx + 1]
+				deltas[layer_idx] *= (1 - activations[layer_idx + 1])
 				deltas[layer_idx] = deltas[layer_idx][1:] # Remove bias unit error
 
 			for l in range(len(upper_deltas)):
@@ -90,10 +108,14 @@ def fit_model(X, y, hidden_layer_size, w=None, learning_rate=0.25, threshold_val
 			if not np.all(np.absolute(w[l] - w_updated[l]) < threshold_value):
 				threshold_exceeded = True
 
-		if not threshold_exceeded:
+		if not threshold_exceeded or epoch == NUM_EPOCHS:
+			if print_optimal_weights:
+				print "Optimal weights: "
+				print w_updated
 			return w_updated	# Optimal parameters found
 
 		w = w_updated	# Continue gradient descent process with updated parameter set
+		epoch += 1
 
 if __name__ == '__main__':
 
@@ -107,15 +129,13 @@ if __name__ == '__main__':
 	lb.fit(unique_labels)
 	y_transform = lb.transform(y)
 
+	# Train the model to learn optimal weights
 	X_train, X_test, y_train, y_test = train_test_split(X, y_transform, test_size = 0.25)
-
 	print "Training model..."
-	optimal_weights = fit_model(X_train, y_train, 100)
-	print "Optimal weights: ", optimal_weights
+	optimal_weights = fit_model(X_train, y_train, (5,8))
 
-
+	# Test the model on held-out test data
 	test_predictions_transform = [[]] * X_test.shape[0]
-	
 	print "Testing model..."
 	for i in range(len(test_predictions_transform)):
 		test_predictions = forward_propagation(X_test[i], optimal_weights) # Last list holds activations using the optimal weights, i.e. the labels
