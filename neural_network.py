@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 from sklearn.neural_network import MLPClassifier
 
-# class NeuralNetwork():
+# class NeuralNetwork(object):
 
 # 	def __init__(self):
 # 		return self
@@ -14,7 +14,7 @@ from sklearn.neural_network import MLPClassifier
 '''
 Define constants
 '''
-EPSILON = 3 # Constant used to randomly initialize weights.
+INIT_WEIGHT_LIMIT = 3 # Constant representing min/max values of randomly initialized weights.
 NUM_EPOCHS = 400 # Max number of training iterations.
 
 '''
@@ -61,14 +61,14 @@ def fit_model(X, y, hidden_layer_sizes=None, w=None, learning_rate=0.25, thresho
 	if y.ndim == 1:
 		y = np.expand_dims(y, axis=0)
 
-	# Randomly initialize weights between [-EPSILON, EPSILON]
+	# Randomly initialize weights between [-INIT_WEIGHT_LIMIT, INIT_WEIGHT_LIMIT]
 	if w is None:
 		w = []
 		num_network_nodes = list(hidden_layer_sizes)
 		num_network_nodes.insert(0, X.shape[1])
 		num_network_nodes.append(y.shape[1]) # List of number of nodes per layer excluding all biases
 		for layer_idx in range(len(num_network_nodes) - 1):
-			w.append(np.random.rand(num_network_nodes[layer_idx + 1], num_network_nodes[layer_idx] + 1) * (2 * EPSILON) - EPSILON)
+			w.append(np.random.rand(num_network_nodes[layer_idx + 1], num_network_nodes[layer_idx] + 1) * (2 * INIT_WEIGHT_LIMIT) - INIT_WEIGHT_LIMIT)
 
 	epoch = 1
 
